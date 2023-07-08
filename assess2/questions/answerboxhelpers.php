@@ -3,6 +3,14 @@
 function isNaN( $var ) {
   // is_numeric catches most things, but not php-generated NAN or INF
   // is_finite catches those
+  if (is_array($var)) { // for complex
+    foreach ($var as $v) {
+        if (!is_numeric($v) || !is_finite($v)) {
+            return true;
+        }
+    }
+    return false;
+  }
   return (!is_numeric($var) || !is_finite($var));
      //return !preg_match('/^[-]?[0-9]+([\.][0-9]+)?([eE][+\-]?[0-9]+)?$/', $var);
      //possible alternative:
@@ -327,6 +335,7 @@ function ntupleToString($ntuples) {
 }
 
 function parseInterval($str, $islist = false) {
+    if (strlen($str)<5) { return false; }
 	if ($islist) {
 		$ints = preg_split('/(?<=[\)\]])\s*,\s*(?=[\(\[])/',$str);
 	} else {
@@ -335,7 +344,8 @@ function parseInterval($str, $islist = false) {
 
 	$out = array();
 	foreach ($ints as $int) {
-    $int = trim($int);
+        $int = trim($int);
+        if (strlen($int) < 5) { return false;}
 		$i = array();
 		$i['lb'] = $int[0];
 		$i['rb'] = $int[strlen($int)-1];
@@ -376,6 +386,9 @@ function parsedIntervalToString($parsed, $islist) {
 function parseChemical($string) {
     $string = str_replace(['<->','<=>'], 'rightleftharpoons', $string);
     $string = str_replace(['to','rarr','implies'], '->', $string);
+    $string = preg_replace('/\^{(.*?)}/', '^($1)', $string);
+    $string = preg_replace('/\(\(([^\(\)]*)\)\)/', '($1)', $string);
+    $string = str_replace('^+','^(+)', $string);
     $parts = preg_split('/(->|rightleftharpoons)/', $string, -1, PREG_SPLIT_DELIM_CAPTURE);
     $reactiontype = (count($parts) > 1) ? $parts[1] : null;
     $sides = [];
@@ -581,7 +594,7 @@ function formathint($eword,$ansformats,$reqdecimals,$calledfrom, $islist=false,$
 	} else if (in_array('scinot',$ansformats)) {
 		$tip .= sprintf(_('Enter %s as in scientific notation.  Example: 3*10^2 = 3 &middot; 10<sup>2</sup>'), $eword);
 		$shorttip = $islist?sprintf(_('Enter a %s of numbers using scientific notation'), $listtype):_('Enter a number using scientific notation');
-	} else {
+	} else if (!in_array('generalcomplex',$ansformats)) {
 		$tip .= sprintf(_('Enter %s as a number (like 5, -3, 2.2172) or as a calculation (like 5/3, 2^3, 5+4)'), $eword);
 		$shorttip = $islist?sprintf(_('Enter a %s of mathematical expressions'), $listtype):_('Enter a mathematical expression');
 	}
@@ -730,7 +743,7 @@ function scorenosolninf($qn, $givenans, $answer, $ansprompt, $format="number") {
 	if (preg_match('/^no\s*solution/',$answer) || $answer===$nosoln) {
 		$answer = 'DNE';
 	}
-	$qs = $_POST["qs$qn"];
+	$qs = $_POST["qs$qn"] ?? '';
 	if ($qs=='DNE') {
 		$givenans = "DNE";
 	} else if ($qs=='inf') {
@@ -765,6 +778,7 @@ function normalizemathunicode($str) {
 	$str = str_replace(array('₀','₁','₂','₃'), array('_0','_1','_2','_3'), $str);
     $str = str_replace(array('√','∛','°'),array('sqrt','root(3)','degree'), $str);
 	$str = preg_replace('/\b(OO|infty)\b/i','oo', $str);
+    $str = str_replace('&ZeroWidthSpace;', '', $str);
   if (strtoupper(trim($str))==='DNE') {
     $str = 'DNE';
   }

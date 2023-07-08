@@ -135,7 +135,7 @@ if (!empty($CFG['assess2-use-vue-dev'])) {
 	$assessUrl = "../assess2/";
 }
 
-$curBreadcrumb = $breadcrumbbase;
+$curBreadcrumb = $breadcrumbbase ?? '';
 if (empty($_COOKIE['fromltimenu'])) {
     $curBreadcrumb .= " <a href=\"course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> &gt; ";
 }
@@ -736,7 +736,7 @@ function gbstudisp($stu) {
 			}
 
 			//echo "<a href=\"$imasroot/msgs/msglist.php?cid={$_GET['cid']}&add=new&to=$stu\">", _('Message'), "</a> | ";
-			echo "<a href=\"#\" onclick=\"GB_show('Send Message','$imasroot/course/sendmsgmodal.php?to=" . Sanitize::onlyInt($stu) . "&sendtype=msg&cid=" . Sanitize::courseId($cid) . "',800,'auto')\" title=\"Send Message\">", _('Message'), "</a> | ";
+			echo "<a href=\"#\" onclick=\"GB_show('Send Message','$imasroot/course/sendmsgmodal.php?to=" . Sanitize::onlyInt($stu) . "&sendtype=msg&cid=" . Sanitize::courseId($cid) . "',800,'auto',true,'',null,{label:'"._('Send Message')."',func:'sendmsg'})\" title=\"Send Message\">", _('Message'), "</a> | ";
 			//remove since redundant with Make Exception button "with selected"
 			//echo "<a href=\"gradebook.php?cid={$_GET['cid']}&uid=$stu&massexception=1\">", _('Make Exception'), "</a> | ";
 			echo "<a href=\"listusers.php?cid=" . Sanitize::courseId($cid) . "&chgstuinfo=true&uid=" . Sanitize::onlyInt($stu) . "\">", _('Change Info'), "</a> | ";
@@ -1913,7 +1913,7 @@ function gbinstrdisp() {
 
 							echo '</span>';
 						}
-						if ($gbt[$i][1][$j][1]==1) {
+						if (!empty($gbt[$i][1][$j][1])) {
 							echo '<sup>*</sup>';
 						}
 					} else {
@@ -1927,7 +1927,7 @@ function gbinstrdisp() {
 				} else if ($gbt[0][1][$j][6]==3) { //exttool
 					if ($isteacher) {
 						if ($gbt[$i][0][0]=='Averages') {
-							if ($gbt[0][1][$j][2]>0) {
+							if (isset($gbt[$i][1][$j][0]) && $gbt[0][1][$j][2]>0) {
 								$avgtip = _('Mean:').' '.round(100*$gbt[$i][1][$j][0]/$gbt[0][1][$j][2],1).'%<br/>';
 							} else {
 								$avgtip = '';
@@ -1958,7 +1958,7 @@ function gbinstrdisp() {
 					if ($isteacher || ($istutor && $gbt[0][1][$j][8]==1)) {
 						echo '</a>';
 					}
-					if ($gbt[$i][1][$j][1]==1) {
+					if (!empty($gbt[$i][1][$j][1])) {
 						echo '<sup>*</sup>';
 					}
 				}

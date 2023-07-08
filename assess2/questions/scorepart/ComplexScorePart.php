@@ -67,7 +67,7 @@ class ComplexScorePart implements ScorePart
             $scorePartResult->setRawScore(0);
             return $scorePartResult;
         }
-        $answer = str_replace(' ', '', makepretty($answer));
+        $answer = str_replace(' ', '', $answer);
         $givenans = trim($givenans);
 
         if ($answer == 'DNE') {
@@ -109,8 +109,12 @@ class ComplexScorePart implements ScorePart
 
             $normalizedGivenAnswers = [];
             foreach ($gaarr as $i => $tchk) {
-
-                if (in_array('sloppycomplex', $ansformats)) {
+                if (in_array('allowjcomplex', $ansformats)) {
+                    $tchk = str_replace('j','i', $tchk);
+                }
+                if (in_array('generalcomplex', $ansformats)) {
+                    // skip format checks
+                } else if (in_array('sloppycomplex', $ansformats)) {
                     $tchk = str_replace(array('sin', 'pi'), array('s$n', 'p$'), $tchk);
                     if (substr_count($tchk, 'i') > 1) {
                         $scorePartResult->setRawScore(0);
@@ -145,6 +149,9 @@ class ComplexScorePart implements ScorePart
             }
         } else { // if "complex"
             foreach ($gaarr as $i => $tchk) {
+                if (in_array('allowjcomplex', $ansformats)) {
+                    $tchk = str_replace('j','i', $tchk);
+                }
                 $cpts = $this->parsecomplex($tchk);
                 if (!is_array($cpts)) {
                     unset($gaarr[$i]);
@@ -158,7 +165,14 @@ class ComplexScorePart implements ScorePart
 
         $ganumarr = array();
         foreach ($gaarr as $j => $givenans) {
-            $gaparts = $this->parsesloppycomplex($givenans);
+            if (in_array('allowjcomplex', $ansformats)) {
+                $givenans = str_replace('j','i',$givenans);
+            }
+            if (in_array('generalcomplex', $ansformats)) {
+                $gaparts = $this->parseGeneralComplex($givenans);
+            } else {
+                $gaparts = $this->parsesloppycomplex($givenans);
+            }
 
             if ($gaparts === false) { //invalid - skip it
                 continue;
@@ -182,12 +196,19 @@ class ComplexScorePart implements ScorePart
             $givenansval = implode(',', $givenansval);
             $scorePartResult->setLastAnswerAsNumber($givenansval);
         }
-
+        $answer = makepretty($answer);
         $anarr = array_map('trim', explode(',', $answer));
         $annumarr = array();
         $normalizedAnswers = [];
         foreach ($anarr as $i => $answer) {
-            $ansparts = $this->parsesloppycomplex($answer);
+            if (in_array('allowjcomplex', $ansformats)) {
+                $answer = str_replace('j','i',$answer);
+            }
+            if (in_array('generalcomplex', $ansformats)) {
+                $ansparts = $this->parseGeneralComplex($answer);
+            } else {
+                $ansparts = $this->parsesloppycomplex($answer);
+            }
             if ($ansparts === false) { //invalid - skip it
                 continue;
             }
@@ -204,7 +225,6 @@ class ComplexScorePart implements ScorePart
                 $normalizedAnswers[] = $anfunc->normalizeTreeString();
             }
         }
-
         if (count($ganumarr) == 0) {
             $scorePartResult->setRawScore(0);
             return $scorePartResult;
@@ -265,7 +285,7 @@ class ComplexScorePart implements ScorePart
 
     private function parsesloppycomplex($v)
     {
-        $func = makeMathFunction($v, 'i');
+        $func = makeMathFunction($v, 'i', [], '', true);
         if ($func === false) {
             return false;
         }
@@ -275,6 +295,13 @@ class ComplexScorePart implements ScorePart
             return false;
         }
         return array($a, ($apb - $a) / 4);
+    }
+    private function parseGeneralComplex($v) {
+        $ev = evalMathParser($v, true);
+        if ($ev === false || !is_array($ev)) {
+            return false;
+        }
+        return $ev;
     }
 
     /**
@@ -362,11 +389,11 @@ class ComplexScorePart implements ScorePart
                     }
                 } else { //i or +i or -i or 3i  (one digit)
                     if ($v[$L] == '+') {
-                        $imag = 1;
+                        $imag = '1';
                     } else if ($v[$L] == '-') {
-                        $imag = -1;
+                        $imag = '-1';
                     } else if ($p == 0) {
-                        $imag = 1;
+                        $imag = '1';
                     } else {
                         $imag = $v[$L];
                     }
