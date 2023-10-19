@@ -7,16 +7,16 @@
 
 // TODO: rework one-stu-at-a-time to use userid as selector
 
-	require("../init.php");
-	require("../assess2/AssessInfo.php");
-	require("../assess2/AssessRecord.php");
+	require_once "../init.php";
+	require_once "../assess2/AssessInfo.php";
+	require_once "../assess2/AssessRecord.php";
 
 	$isteacher = isset($teacherid);
 	$istutor = isset($tutorid);
 	if (!$isteacher && !$istutor) {
-		require("../header.php");
+		require_once "../header.php";
 		echo "You need to log in as a teacher or tutor to access this page";
-		require("../footer.php");
+		require_once "../footer.php";
 		exit;
 	}
 
@@ -69,9 +69,9 @@
 		exit;
 	}
 	if ($istutor && $tutoredit==2) {
-		require("../header.php");
+		require_once "../header.php";
 		echo "You not have access to view scores for this assessment";
-		require("../footer.php");
+		require_once "../footer.php";
 		exit;
 	} else if ($isteacher || ($istutor && ($tutoredit&1)==1)) {
 		$canedit = 1;
@@ -239,7 +239,7 @@
 				// is added, this is removed:  count($adjustedScores) > 0 &&
 				if (strlen($line['lti_sourcedid'])>1) {
 					//update LTI score
-					require_once("../includes/ltioutcomes.php");
+					require_once "../includes/ltioutcomes.php";
 					$gbscore = $assess_record->getGbScore();
 					calcandupdateLTIgrade($line['lti_sourcedid'],$aid,$line['userid'],$gbscore['gbscore'],true, -1, false);
 				}
@@ -284,7 +284,7 @@
 		exit;
 	}
 
-	require("../includes/htmlutil.php");
+	require_once "../includes/htmlutil.php";
 
 	if ($isgroup>0) {
 		$groupnames = array();
@@ -370,13 +370,13 @@
         $placeinhead .= '<script src="'.$staticroot.'/javascript/drawing.js?v=041920" type="text/javascript"></script>';
         $placeinhead .= '<script src="'.$staticroot.'/javascript/AMhelpers2.js?v=052120" type="text/javascript"></script>';
         $placeinhead .= '<script src="'.$staticroot.'/javascript/eqntips.js?v=041920" type="text/javascript"></script>';
-        $placeinhead .= '<script src="'.$staticroot.'/javascript/mathjs.js?v=041920" type="text/javascript"></script>';
+        $placeinhead .= '<script src="'.$staticroot.'/javascript/mathjs.js?v=20230729" type="text/javascript"></script>';
         $placeinhead .= '<script src="'.$staticroot.'/mathquill/AMtoMQ.js?v=052120" type="text/javascript"></script>';
         $placeinhead .= '<script src="'.$staticroot.'/mathquill/mqeditor.js?v=041920" type="text/javascript"></script>';
         $placeinhead .= '<script src="'.$staticroot.'/mathquill/mqedlayout.js?v=041920" type="text/javascript"></script>';
     } else {
         $placeinhead .= '<script src="'.$staticroot.'/mathquill/mathquill.min.js?v=100220" type="text/javascript"></script>';
-        $placeinhead .= '<script src="'.$staticroot.'/javascript/assess2_min.js?v=021123" type="text/javascript"></script>';
+        $placeinhead .= '<script src="'.$staticroot.'/javascript/assess2_min.js?v=20231018" type="text/javascript"></script>';
     }
     
 	$placeinhead .= '<link rel="stylesheet" type="text/css" href="'.$staticroot.'/mathquill/mathquill-basic.css?v=021823">
@@ -418,10 +418,10 @@
         .fixedbottomright {position: fixed; right: 10px; bottom: 10px; z-index:10;}
         .hoverbox { background-color: #fff; z-index: 9; box-shadow: 0px -3px 5px 0px rgb(0 0 0 / 75%);}
 		</style>';
-	require("../includes/rubric.php");
+	require_once "../includes/rubric.php";
 	$_SESSION['coursetheme'] = $coursetheme;
-	require("../header.php");
-	echo "<style type=\"text/css\">p.tips {	display: none;}\n .hideongradeall { display: none;} .pseudohidden {visibility:hidden;position:absolute;}</style>\n";
+	require_once "../header.php";
+	echo "<style type=\"text/css\">p.tips {	display: none;} .hideongradeall { display: none;} .pseudohidden {visibility:hidden;position:absolute;}</style>\n";
 	echo "<div class=breadcrumb>$breadcrumbbase <a href=\"course.php?cid=".Sanitize::courseId($_GET['cid'])."\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
 	echo "&gt; <a href=\"gradebook.php?stu=0&cid=$cid\">Gradebook</a> ";
 	echo "&gt; <a href=\"gb-itemanalysis2.php?stu=" . Sanitize::encodeUrlParam($stu) . "&cid=$cid&aid=" . Sanitize::onlyInt($aid) . "\">Item Analysis</a> ";
@@ -582,7 +582,7 @@
 	$stm->execute($qarr);
 	$cnt = 0;
 	$onepergroup = array();
-	require_once("../includes/filehandler.php");
+	require_once "../includes/filehandler.php";
     echo '<div id="qlistwrap">';
 	if ($stm->rowCount()>0) {
 	while($line=$stm->fetch(PDO::FETCH_ASSOC)) {
@@ -890,5 +890,5 @@
   	</div>
 		<div id="eh" class="eh"></div>';
 	$useeqnhelper = 0;
-	require("../footer.php");
+	require_once "../footer.php";
 ?>

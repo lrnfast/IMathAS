@@ -786,6 +786,7 @@ function normalizemathunicode(str) {
 	str = str.replace(/λ/g,"lambda").replace(/ρ/g,"rho").replace(/τ/g,"tau").replace(/χ/g,"chi").replace(/ω/g,"omega");
 	str = str.replace(/Ω/g,"Omega").replace(/Γ/g,"Gamma").replace(/Φ/g,"Phi").replace(/Δ/g,"Delta").replace(/Σ/g,"Sigma");
     str = str.replace(/&(ZeroWidthSpace|nbsp);/g, ' ').replace(/\u200B/g, ' ');
+    str = str.replace(/degree\s+s\b/g,'degree');
 	return str;
 }
 
@@ -851,7 +852,11 @@ function showSyntaxCheckMQ(qn) {
   var res = processByType(qn);
   var outstr = '';
   if (res.dispvalstr && res.dispvalstr != '' && res.dispvalstr != 'NaN' && params.calcformat && params.calcformat.indexOf('showval')!=-1) {
-    outstr += ' = ' + htmlEntities(res.dispvalstr) + ' ';
+    if (params.qtype == 'calcmatrix') {
+        outstr += ' = `' + htmlEntities(res.dispvalstr) + '` ';
+    } else {
+        outstr += ' = ' + htmlEntities(res.dispvalstr) + ' ';
+    }
   }
   if (res.err && res.err != '' && res.str != '') {
     outstr += '<span class=noticetext>' + res.err + '</span>';
@@ -865,6 +870,7 @@ function showSyntaxCheckMQ(qn) {
     var previewel = document.getElementById('p'+qn);
     if (previewel) {
         previewel.innerHTML = outstr;
+        rendermathnode(previewel);
     }
   }
   if (document.getElementById("qn"+qn)) {
@@ -1093,6 +1099,8 @@ function AMnumfuncPrepVar(qn,str) {
      }
      return p1;
     });
+  // fix variable pairs being interpreted as asciimath symbol, like in
+  dispstr = dispstr.replace(/(@v\d+@)(@v\d+@)/g,"$1 $2");
   // fix display of /n!
   dispstr = dispstr.replace(/(@v(\d+)@|\d+(\.\d+)?)!(?!=)/g, '{:$&:}');
   dispstr = dispstr.replace(/@v(\d+)@/g, function(match,contents) {
@@ -1506,7 +1514,7 @@ function processCalcComplex(fullstr, format) {
         err += singlevalsyntaxcheck(cparts[0], format);
         err += singlevalsyntaxcheck(cparts[1], format);
       }
-    }
+    } 
     err += syntaxcheckexpr(str, format);
     prep = prepWithMath(mathjs(str,'i'));
     real = scopedeval('var i=0;'+prep);
@@ -1688,6 +1696,8 @@ function processNumfunc(qn, fullstr, format) {
             }
         } else if (totesteqn.match(/(<=|>=|<|>|!=)/g).length>1) {
             err += _("syntax error: your inequality should only contain one inequality symbol")+ '. ';
+        } else if (totesteqn.match(/(^(<|>|!))|(=|>|<)$/)) {
+            err += _("syntax error: your inequality should have expressions on both sides")+ '. ';
         }
         totesteqn = totesteqn.replace(/(.*)(<=|>=|<|>|!=)(.*)/,"$1-($3)");
     } else if (totesteqn.match(/=/)) {
@@ -1697,6 +1707,8 @@ function processNumfunc(qn, fullstr, format) {
             err += _("syntax error: you gave an equation, not an expression")+ '. ';
         } else if (totesteqn.match(/=/g).length>1) {
             err += _("syntax error: your equation should only contain one equal sign")+ '. ';
+        } else if (totesteqn.match(/(^=)|(=$)/)) {
+            err += _("syntax error: your equation should have expressions on both sides")+ '. ';
         }
         totesteqn = totesteqn.replace(/(.*)=(.*)/,"$1-($2)");
     } else if (iseqn && isineq) {
@@ -1736,7 +1748,7 @@ function processNumfunc(qn, fullstr, format) {
           err += _("syntax error") + '. ';
       }
     }
-    err += syntaxcheckexpr(strprocess[0], format, vars.map(escapeRegExp).join('|'));
+    err += syntaxcheckexpr(strprocess[0], format + ',isnumfunc', vars.map(escapeRegExp).join('|'));
   }
   return {
     err: err
@@ -1975,9 +1987,7 @@ function singlevalsyntaxcheck(str,format) {
 		}
 	} else if (!onlyAscii.test(str)) {
 		return _("Your answer contains an unrecognized symbol")+". ";
-  	} else if (str.match(/=/)) {
-        return _("You gave an equation, not an expression")+ '. ';
-    }
+  	} 
 	return '';
 }
 
@@ -2042,6 +2052,9 @@ function syntaxcheckexpr(str,format,vl) {
 	  if (str.match(/%/) && !str.match(/^\s*[+-]?\s*((\d+(\.\d*)?)|(\.\d+))\s*%\s*$/)) {
 	  	  err += _(" Do not use the percent symbol, %")+". ";
 	  }
+      if (str.match(/=/) && !format.match(/isnumfunc/)) {
+        err += _("You gave an equation, not an expression")+ '. ';
+      }
 
 	  return err;
 }
